@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useMultiStore } from '../store/multiStore'
 import { C } from '../theme/tokens'
 import { SegmentedControl } from './SegmentedControl'
+import { useIsPortrait } from '../hooks/useIsPortrait'
 
 export function MultiLobby() {
   const { isHost, roomCode, myName, opponentName, gameMode, setGameMode, startGame, leaveRoom } = useMultiStore()
+  const { isPortrait } = useIsPortrait()
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -17,13 +19,20 @@ export function MultiLobby() {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-[60]"
+      className={`fixed inset-0 z-[60] ${isPortrait ? 'flex items-end' : 'flex items-center justify-center'}`}
       style={{ background: C.scrim85, backdropFilter: 'blur(6px)' }}
     >
       <div
-        className="rounded-3xl p-6 w-full mx-4 shadow-2xl"
-        style={{ maxWidth: 380, background: C.surface, border: `1px solid ${C.borderStrong}` }}
+        className={`shadow-2xl ${isPortrait ? 'bottom-sheet-in' : ''}`}
+        style={
+          isPortrait
+            ? { width: '100%', borderRadius: '20px 20px 0 0', padding: '8px 24px 32px', background: C.surface, border: `1px solid ${C.borderStrong}`, borderBottom: 'none' }
+            : { maxWidth: 380, width: 'calc(100% - 32px)', borderRadius: 24, padding: 24, background: C.surface, border: `1px solid ${C.borderStrong}` }
+        }
       >
+        {isPortrait && (
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: C.borderStrong, margin: '8px auto 16px' }} />
+        )}
         {/* 헤더 */}
         <div className="text-center mb-5">
           <div className="text-4xl mb-2">👥</div>

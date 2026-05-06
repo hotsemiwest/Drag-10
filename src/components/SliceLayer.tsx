@@ -5,7 +5,6 @@ import { SliceAnimation } from '../types/game'
 
 const TILE_SIZE = 52
 const GAP = 2
-// const CELL = TILE_SIZE + GAP
 
 // 대각 슬래시 기준선: (0, 75%) → (100%, 25%), 기울기 약 -26.6°
 const CLIP_TOP    = 'polygon(0 0, 100% 0, 100% 25%, 0 75%)'
@@ -16,9 +15,10 @@ interface SliceLayerProps {
   sliceAnimations?: SliceAnimation[]
   tileSize?: number
   gap?: number
+  isPortrait?: boolean
 }
 
-export function SliceLayer({ sliceAnimations, tileSize = TILE_SIZE, gap = GAP }: SliceLayerProps) {
+export function SliceLayer({ sliceAnimations, tileSize = TILE_SIZE, gap = GAP, isPortrait = false }: SliceLayerProps) {
   const storeSliceAnimations = useGameStore(s => s.sliceAnimations)
   const resolved = sliceAnimations ?? storeSliceAnimations
   const tileColorId = useThemeStore(s => s.tileColorId)
@@ -37,8 +37,9 @@ export function SliceLayer({ sliceAnimations, tileSize = TILE_SIZE, gap = GAP }:
   return (
     <div className="absolute pointer-events-none" style={{ inset: 0, zIndex: 25 }}>
       {resolved.map(anim => {
-        const left = anim.col * cellSize
-        const top  = anim.row * cellSize
+        // In portrait mode, visual x = logical row * cell, visual y = logical col * cell
+        const left = isPortrait ? anim.row * cellSize : anim.col * cellSize
+        const top  = isPortrait ? anim.col * cellSize : anim.row * cellSize
 
         const tileContent = (
           <div

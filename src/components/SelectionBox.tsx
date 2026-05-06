@@ -2,10 +2,6 @@ import { forwardRef, useRef, useImperativeHandle } from 'react'
 import { NormalizedRect } from '../types/game'
 import { C } from '../theme/tokens'
 
-const TILE_SIZE = 52
-const GAP = 2
-const CELL = TILE_SIZE + GAP
-
 export interface SelectionBoxHandle {
   show: (rect: NormalizedRect, sum: number) => void
   hide: () => void
@@ -14,11 +10,15 @@ export interface SelectionBoxHandle {
 interface Props {
   showSum?: boolean
   showRangeColor?: boolean
+  tileSize?: number
+  gap?: number
 }
 
 export const SelectionBox = forwardRef<SelectionBoxHandle, Props>(function SelectionBox({
   showSum = true,
   showRangeColor = true,
+  tileSize = 52,
+  gap = 2,
 }, ref) {
   const boxRef = useRef<HTMLDivElement>(null)
   const sumRef = useRef<HTMLSpanElement>(null)
@@ -28,6 +28,7 @@ export const SelectionBox = forwardRef<SelectionBoxHandle, Props>(function Selec
       const el = boxRef.current
       if (!el) return
 
+      const cell = tileSize + gap
       const isExact = sum === 10
       const isOver = sum > 10
       const borderColor = showRangeColor
@@ -37,10 +38,10 @@ export const SelectionBox = forwardRef<SelectionBoxHandle, Props>(function Selec
         ? (isExact ? C.exactBg : isOver ? C.overBg : C.neutralBg)
         : C.neutralBg
 
-      const x = rect.minCol * CELL
-      const y = rect.minRow * CELL
-      const w = (rect.maxCol - rect.minCol + 1) * CELL - GAP
-      const h = (rect.maxRow - rect.minRow + 1) * CELL - GAP
+      const x = rect.minCol * cell
+      const y = rect.minRow * cell
+      const w = (rect.maxCol - rect.minCol + 1) * cell - gap
+      const h = (rect.maxRow - rect.minRow + 1) * cell - gap
 
       el.style.display = 'block'
       el.style.transform = `translate(${x}px, ${y}px)`
@@ -59,7 +60,7 @@ export const SelectionBox = forwardRef<SelectionBoxHandle, Props>(function Selec
     hide() {
       if (boxRef.current) boxRef.current.style.display = 'none'
     },
-  }), [showRangeColor, showSum])
+  }), [showRangeColor, showSum, tileSize, gap])
 
   return (
     <div

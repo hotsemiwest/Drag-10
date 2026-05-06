@@ -13,6 +13,7 @@ import { C, G } from '../theme/tokens'
 import { SegmentedControl } from './SegmentedControl'
 import { getDifficultyStarCount } from '../config/difficultyConfig'
 import { unlockAudio } from '../utils/sound'
+import { useIsPortrait } from '../hooks/useIsPortrait'
 
 export function Header() {
   const score          = useGameStore(s => s.score)
@@ -30,6 +31,7 @@ export function Header() {
   const theme = useThemeStore(s => s.theme)
   const showHintCount = useThemeStore(s => s.showHintCount)
   const showDifficulty = useThemeStore(s => s.showDifficulty)
+  const { isPortrait } = useIsPortrait()
 
   const solutionCount = useMemo(() => {
     if (!showHintCount || gamePhase !== 'playing') return 0
@@ -50,53 +52,58 @@ export function Header() {
   const isUrgent = timeLeft <= 30 && gamePhase === 'playing'
   const difficultyStars = getDifficultyStarCount(boardDifficulty ?? 0)
 
+  // 포트레이트 모드 점수 폰트 크기
+  const scoreFontClass = isPortrait ? 'text-xl font-bold' : 'text-3xl font-bold'
+  const timerFontClass = isPortrait ? 'text-2xl font-black tabular-nums' : 'text-4xl font-black tabular-nums'
+  const labelClass = 'text-xs text-gray-400 uppercase tracking-widest font-semibold'
+
   return (
     <>
       <div className="w-full mb-2">
-        <div className="flex items-center justify-between w-full py-3">
+        <div className={`flex items-center justify-between w-full ${isPortrait ? 'py-2 gap-1' : 'py-3'}`}>
 
           {/* 왼쪽: 점수 / 최고기록 */}
-          <div className="flex gap-6 flex-1">
+          <div className={`flex ${isPortrait ? 'gap-3' : 'gap-6'} flex-1 min-w-0`}>
             {!isStart ? (
               <>
                 {gameMode === 'time' ? (
                   <>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">진행도</div>
-                      <div key={score} className={`text-3xl font-bold score-display ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
-                        {score}<span className="text-base font-semibold text-gray-400">/{TIME_ATTACK_TARGET}</span>
+                    <div className="text-center shrink-0">
+                      <div className={labelClass}>진행도</div>
+                      <div key={score} className={`${scoreFontClass} score-display ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+                        {score}<span className={`${isPortrait ? 'text-xs' : 'text-base'} font-semibold text-gray-400`}>/{TIME_ATTACK_TARGET}</span>
                       </div>
                     </div>
                     {personalBestTime > 0 && (
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">최고기록</div>
-                        <div className="text-3xl font-bold" style={{ color: C.orange }}>{formatTime(personalBestTime)}</div>
+                      <div className="text-center shrink-0">
+                        <div className={labelClass}>최고기록</div>
+                        <div className={`${isPortrait ? 'text-xl' : 'text-3xl'} font-bold`} style={{ color: C.orange }}>{formatTime(personalBestTime)}</div>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">점수</div>
-                      <div key={score} className={`text-3xl font-bold score-display ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{score}</div>
+                    <div className="text-center shrink-0">
+                      <div className={labelClass}>점수</div>
+                      <div key={score} className={`${scoreFontClass} score-display ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{score}</div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">최고기록</div>
-                      <div className="text-3xl font-bold" style={{ color: C.accentYellow }}>{personalBest}</div>
+                    <div className="text-center shrink-0">
+                      <div className={labelClass}>최고기록</div>
+                      <div className={`${isPortrait ? 'text-xl' : 'text-3xl'} font-bold`} style={{ color: C.accentYellow }}>{personalBest}</div>
                     </div>
                   </>
                 )}
-                {gamePhase === 'playing' && (showHintCount || showDifficulty) && (
+                {gamePhase === 'playing' && !isPortrait && (showHintCount || showDifficulty) && (
                   <>
                     {showHintCount && (
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">조합 수</div>
+                      <div className="text-center shrink-0">
+                        <div className={labelClass}>조합 수</div>
                         <div className="text-3xl font-bold" style={{ color: C.blue }}>{solutionCount}</div>
                       </div>
                     )}
                     {showDifficulty && (
-                      <div className="text-center">
-                        <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">난이도</div>
+                      <div className="text-center shrink-0">
+                        <div className={labelClass}>난이도</div>
                         <div className="text-3xl font-bold tracking-tight" style={{ color: C.orange }}>{difficultyStars}</div>
                       </div>
                     )}
@@ -104,22 +111,22 @@ export function Header() {
                 )}
               </>
             ) : (personalBest > 0 || personalBestTime > 0) ? (
-              <div className="flex items-center gap-2">
+              <div className={`flex items-center ${isPortrait ? 'gap-1.5 flex-wrap' : 'gap-2'}`}>
                 {personalBest > 0 && (
                   <div
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold"
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-lg ${isPortrait ? 'text-xs' : 'text-sm'} font-semibold`}
                     style={{ background: C.surfaceRaised, border: `1px solid ${C.borderGhost}` }}
                   >
-                    <span style={{ color: C.textSub }}>⏱️ 스코어 어택</span>
+                    <span style={{ color: C.textSub }}>⏱️</span>
                     <span className="font-bold" style={{ color: C.accentYellow }}>{personalBest}점</span>
                   </div>
                 )}
                 {personalBestTime > 0 && (
                   <div
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold"
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-lg ${isPortrait ? 'text-xs' : 'text-sm'} font-semibold`}
                     style={{ background: C.surfaceRaised, border: `1px solid ${C.borderGhost}` }}
                   >
-                    <span style={{ color: C.textSub }}>🎯 타임 어택</span>
+                    <span style={{ color: C.textSub }}>🎯</span>
                     <span className="font-bold" style={{ color: C.accentYellow }}>{formatTime(personalBestTime)}</span>
                   </div>
                 )}
@@ -128,20 +135,20 @@ export function Header() {
           </div>
 
           {/* 중앙: 타이머 */}
-          <div className="text-center">
+          <div className="text-center shrink-0">
             {!isStart && (
               gameMode === 'time' ? (
                 <>
-                  <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">경과 시간</div>
-                  <div className={`text-4xl font-black tabular-nums ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
+                  {!isPortrait && <div className={labelClass}>경과 시간</div>}
+                  <div className={`${timerFontClass} ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
                     {formatTime(elapsedTime)}
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="text-xs text-gray-400 uppercase tracking-widest font-semibold">남은 시간</div>
+                  {!isPortrait && <div className={labelClass}>남은 시간</div>}
                   <div
-                    className={`text-4xl font-black tabular-nums transition-colors ${
+                    className={`${timerFontClass} transition-colors ${
                       isUrgent ? `${theme === 'light' ? 'text-red-600' : 'text-red-400'} timer-shake` : theme === 'light' ? 'text-gray-900' : 'text-white'
                     }`}
                   >
@@ -152,43 +159,45 @@ export function Header() {
             )}
           </div>
 
-          {/* 오른쪽 */}
-          <div className="flex items-center justify-end gap-2 flex-1">
+          {/* 오른쪽 버튼들 */}
+          <div className={`flex items-center justify-end ${isPortrait ? 'gap-1' : 'gap-2'} flex-1`}>
             {isStart ? (
               <>
                 <SettingsButton />
                 <button
                   onClick={() => setShowLeaderboard(true)}
-                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+                  className={`${isPortrait ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} rounded-lg font-semibold transition-all active:scale-95`}
                   style={{ background: C.surfaceRaised, color: C.textSub, border: `1px solid ${C.borderGhost}` }}
                 >
-                  🏆 랭킹
+                  {isPortrait ? '🏆' : '🏆 랭킹'}
                 </button>
 
                 {user ? (
-                  <div className="flex items-center gap-2">
+                  <div className={`flex items-center ${isPortrait ? 'gap-1' : 'gap-2'}`}>
                     <button
                       onClick={() => setShowProfile(true)}
-                      className="px-3 py-2 rounded-lg text-sm transition-all active:scale-95"
+                      className={`${isPortrait ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} rounded-lg transition-all active:scale-95`}
                       style={{ background: C.surfaceRaised, border: `1px solid ${C.borderGhost}` }}
                     >
-                      <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>👤 {displayName}</span>
+                      <span className={`font-semibold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
+                        {isPortrait ? '👤' : `👤 ${displayName}`}
+                      </span>
                     </button>
                     <button
                       onClick={signOut}
-                      className="px-3 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+                      className={`${isPortrait ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} rounded-lg font-semibold transition-all active:scale-95`}
                       style={{ background: C.surfaceRaised, color: C.textSub, border: `1px solid ${C.borderGhost}` }}
                     >
-                      로그아웃
+                      {isPortrait ? '🚪' : '로그아웃'}
                     </button>
                   </div>
                 ) : (
                   <button
                     onClick={() => setShowAuth(true)}
-                    className="px-3 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+                    className={`${isPortrait ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} rounded-lg font-semibold transition-all active:scale-95`}
                     style={{ background: C.surfaceRaised, color: C.textSub, border: `1px solid ${C.borderGhost}` }}
                   >
-                    로그인
+                    {isPortrait ? '🔑' : '로그인'}
                   </button>
                 )}
               </>
@@ -197,24 +206,24 @@ export function Header() {
                 <SettingsButton />
                 <button
                   onClick={goHome}
-                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+                  className={`${isPortrait ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} rounded-lg font-semibold transition-all active:scale-95`}
                   style={{ background: C.surfaceRaised, color: C.textSub, border: `1px solid ${C.borderGhost}` }}
                 >
-                  🏠 나가기
+                  {isPortrait ? '🏠' : '🏠 나가기'}
                 </button>
                 <button
                   onClick={() => { unlockAudio(); startGame() }}
-                  className="px-3 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
+                  className={`${isPortrait ? 'px-2 py-2 text-xs' : 'px-3 py-2 text-sm'} rounded-lg font-semibold transition-all active:scale-95`}
                   style={{ background: C.surfaceRaised, color: C.textSub, border: `1px solid ${C.borderGhost}` }}
                 >
-                  🔄 다시하기
+                  {isPortrait ? '🔄' : '🔄 다시하기'}
                 </button>
               </>
             )}
           </div>
         </div>
 
-        {/* 게이지바: 게임 중일 때만, 컨테이너 전체 너비 */}
+        {/* 게이지바 */}
         {!isStart && (
           <div
             className="w-full h-2 rounded-full overflow-hidden"
@@ -235,17 +244,43 @@ export function Header() {
         )}
       </div>
 
+      {/* 랭킹 모달 (포트레이트: 바텀시트) */}
       {showLeaderboard && createPortal(
         <div
-          className="fixed inset-0 flex items-center justify-center z-50"
+          className={`fixed inset-0 z-50 ${isPortrait ? 'flex items-end' : 'flex items-center justify-center'}`}
           style={{ background: C.scrim75, backdropFilter: 'blur(4px)' }}
           onClick={() => setShowLeaderboard(false)}
         >
           <div
-            className="rounded-3xl p-6 w-full mx-4 shadow-2xl"
-            style={{ maxWidth: 360, maxHeight: '80vh', overflowY: 'auto', background: C.surface, border: `1px solid ${C.borderStrong}` }}
+            className={`shadow-2xl ${isPortrait ? 'bottom-sheet-in' : ''}`}
+            style={
+              isPortrait
+                ? {
+                    width: '100%',
+                    borderRadius: '20px 20px 0 0',
+                    padding: '8px 20px 32px',
+                    maxHeight: '80dvh',
+                    overflowY: 'auto',
+                    background: C.surface,
+                    border: `1px solid ${C.borderStrong}`,
+                    borderBottom: 'none',
+                  }
+                : {
+                    maxWidth: 360,
+                    width: 'calc(100% - 32px)',
+                    borderRadius: 24,
+                    padding: 24,
+                    maxHeight: '80vh',
+                    overflowY: 'auto',
+                    background: C.surface,
+                    border: `1px solid ${C.borderStrong}`,
+                  }
+            }
             onClick={e => e.stopPropagation()}
           >
+            {isPortrait && (
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: C.borderStrong, margin: '8px auto 16px' }} />
+            )}
             <h2 className="text-xl font-bold text-center mb-3" style={{ color: C.textPrimary }}>🏆 TOP 10</h2>
             <div className="mb-3">
               <SegmentedControl
@@ -260,7 +295,7 @@ export function Header() {
             <Leaderboard mode={leaderboardTab} onUserClick={handleLeaderboardUserClick} />
             <button
               onClick={() => setShowLeaderboard(false)}
-              className="w-full mt-4 py-3 rounded-2xl text-sm font-bold transition-all active:scale-95 panel-hover"
+              className="w-full mt-4 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-95 panel-hover"
               style={{ background: C.surfaceRaised, color: C.textSub }}
             >
               닫기

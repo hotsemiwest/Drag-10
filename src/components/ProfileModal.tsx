@@ -6,10 +6,10 @@ import { ScoreChart } from './ScoreChart'
 import { C } from '../theme/tokens'
 import { SegmentedControl } from './SegmentedControl'
 import { formatTime } from '../utils/gameLogic'
+import { useIsPortrait } from '../hooks/useIsPortrait'
 
 interface Props {
   onClose: () => void
-  /** 다른 유저의 프로필을 볼 때 전달 */
   targetUserId?: string
   targetDisplayName?: string
 }
@@ -30,10 +30,9 @@ function rankColor(rank: number) {
   return C.rankDefault
 }
 
-
-// ─── 프로필 모달 ─────────────────────────────────────────────────
 export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props) {
   const { user, displayName, updateDisplayName } = useAuthStore()
+  const { isPortrait } = useIsPortrait()
   const [data, setData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -73,17 +72,49 @@ export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props
       .finally(() => setLoading(false))
   }, [isOwnProfile, targetUserId])
 
+  const sheetStyle: React.CSSProperties = isPortrait
+    ? {
+        width: '100%',
+        borderRadius: '20px 20px 0 0',
+        padding: '8px 20px 32px',
+        maxHeight: '90dvh',
+        overflowY: 'auto',
+        background: C.surface,
+        border: `1px solid ${C.borderStrong}`,
+        borderBottom: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }
+    : {
+        maxWidth: 380,
+        width: 'calc(100% - 32px)',
+        borderRadius: 24,
+        padding: 24,
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        background: C.surface,
+        border: `1px solid ${C.borderStrong}`,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }
+
   return createPortal(
     <div
-      className="fixed inset-0 flex items-center justify-center z-[60]"
+      className={`fixed inset-0 z-[60] ${isPortrait ? 'flex items-end' : 'flex items-center justify-center'}`}
       style={{ background: C.scrim80, backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
-        className="rounded-3xl p-6 w-full mx-4 shadow-2xl flex flex-col gap-4"
-        style={{ maxWidth: 380, maxHeight: '90vh', overflowY: 'auto', background: C.surface, border: `1px solid ${C.borderStrong}` }}
+        className={`shadow-2xl ${isPortrait ? 'bottom-sheet-in' : ''}`}
+        style={sheetStyle}
         onClick={e => e.stopPropagation()}
       >
+        {isPortrait && (
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: C.borderStrong, margin: '8px auto 0' }} />
+        )}
+
         {/* 계정 정보 */}
         <div className="text-center">
           <div className="text-4xl mb-2">👤</div>
@@ -102,7 +133,7 @@ export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props
               <div className="flex gap-2">
                 <button
                   onClick={() => { setEditingName(null); setNameError('') }}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold transition-all panel-hover"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all panel-hover"
                   style={{ background: C.surfaceRaised, color: C.textSub }}
                 >
                   취소
@@ -110,7 +141,7 @@ export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props
                 <button
                   onClick={handleSaveName}
                   disabled={saving}
-                  className="px-3 py-1 rounded-lg text-xs font-semibold text-white bg-green-600 transition-all disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-green-600 transition-all disabled:opacity-50"
                 >
                   {saving ? '저장 중...' : '저장'}
                 </button>
@@ -125,7 +156,7 @@ export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props
               {isOwnProfile && (
                 <button
                   onClick={() => setEditingName(displayName ?? '')}
-                  className="px-2 py-0.5 rounded-lg text-xs font-semibold transition-all panel-hover"
+                  className="px-2 py-1 rounded-lg text-xs font-semibold transition-all panel-hover"
                   style={{ background: C.surfaceRaised, color: C.textMuted }}
                 >
                   닉네임 변경
@@ -145,7 +176,6 @@ export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props
 
         {data && !loading && (
           <>
-            {/* 탭 */}
             <SegmentedControl
               options={[
                 { value: 'score', label: '⏱️ 스코어 어택' },
@@ -241,7 +271,7 @@ export function ProfileModal({ onClose, targetUserId, targetDisplayName }: Props
 
         <button
           onClick={onClose}
-          className="w-full py-3 rounded-2xl text-sm font-bold transition-all active:scale-95 mt-auto panel-hover"
+          className="w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-95 mt-auto panel-hover"
           style={{ background: C.surfaceRaised, color: C.textSub }}
         >
           닫기

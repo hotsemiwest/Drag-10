@@ -8,12 +8,14 @@ import { AuthModal } from './AuthModal'
 import { ScoreChart, HistoryEntry } from './ScoreChart'
 import { formatTime } from '../utils/gameLogic'
 import { unlockAudio } from '../utils/sound'
+import { useIsPortrait } from '../hooks/useIsPortrait'
 
 type Phase = 'submitting' | 'leaderboard' | 'guest'
 
 export function GameOverModal() {
   const { score, personalBest, personalBestTime, elapsedTime, gameMode, isNewRecord, isAIGame, startGame, goHome } = useGameStore()
   const { user, displayName, setPendingAuth } = useAuthStore()
+  const { isPortrait } = useIsPortrait()
 
   const isTimeAttack = gameMode === 'time'
 
@@ -53,7 +55,6 @@ export function GameOverModal() {
     }
   }
 
-  // 로그인 상태면 자동 제출
   useEffect(() => {
     if (phase !== 'submitting' || !displayName || didSubmit.current) return
     didSubmit.current = true
@@ -63,7 +64,6 @@ export function GameOverModal() {
     })
   }, [phase, displayName, score])
 
-  // 게스트가 게임 오버 화면에서 로그인 성공 시 점수 제출
   async function handleAuthSuccess() {
     setShowAuth(false)
     const { displayName: dn } = useAuthStore.getState()
@@ -73,16 +73,43 @@ export function GameOverModal() {
     setPhase('leaderboard')
   }
 
+  const sheetStyle: React.CSSProperties = isPortrait
+    ? {
+        width: '100%',
+        borderRadius: '20px 20px 0 0',
+        padding: '8px 20px 32px',
+        maxHeight: '90dvh',
+        overflowY: 'auto',
+        background: C.surface,
+        border: `1px solid ${C.borderStrong}`,
+        borderBottom: 'none',
+      }
+    : {
+        maxWidth: 380,
+        width: 'calc(100% - 32px)',
+        borderRadius: 24,
+        padding: 24,
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        background: C.surface,
+        border: `1px solid ${C.borderStrong}`,
+      }
+
   return (
     <>
       <div
-        className="fixed inset-0 flex items-center justify-center z-50"
+        className={`fixed inset-0 z-50 ${isPortrait ? 'flex items-end' : 'flex items-center justify-center'}`}
         style={{ background: C.scrim75, backdropFilter: 'blur(4px)' }}
       >
         <div
-          className="rounded-3xl p-6 w-full mx-4 shadow-2xl flex flex-col"
-          style={{ maxWidth: 380, maxHeight: '90vh', overflowY: 'auto', background: C.surface, border: `1px solid ${C.borderStrong}` }}
+          className={isPortrait ? 'bottom-sheet-in' : ''}
+          style={sheetStyle}
         >
+          {/* 바텀시트 핸들 */}
+          {isPortrait && (
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: C.borderStrong, margin: '8px auto 16px' }} />
+          )}
+
           {/* 헤더 */}
           <div className="text-center mb-4">
             <div className="text-4xl mb-1">{isTimeAttack ? '🎯' : isNewRecord ? '🏆' : '⏱️'}</div>

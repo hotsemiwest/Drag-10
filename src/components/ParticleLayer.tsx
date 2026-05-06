@@ -23,6 +23,7 @@ function drawParticles(
   height: number,
   cellSize: number,
   tileSize: number,
+  isPortrait: boolean,
 ) {
   ctx.clearRect(0, 0, width, height)
   let currentColor = ''
@@ -33,11 +34,17 @@ function drawParticles(
     if (progress >= 1) continue
 
     const eased    = easeOut(progress)
-    // Use precomputed vx/vy/px/py; fall back to on-the-fly calc for old particles
     const vx = p.vx ?? Math.cos(p.angle * DEG_TO_RAD)
     const vy = p.vy ?? Math.sin(p.angle * DEG_TO_RAD)
-    const originX = p.px ?? (p.col * cellSize + tileSize / 2)
-    const originY = p.py ?? (p.row * cellSize + tileSize / 2)
+
+    // In portrait mode, swap row↔col for x↔y mapping (logical→visual transposition)
+    const originX = isPortrait
+      ? p.row * cellSize + tileSize / 2
+      : (p.px ?? (p.col * cellSize + tileSize / 2))
+    const originY = isPortrait
+      ? p.col * cellSize + tileSize / 2
+      : (p.py ?? (p.row * cellSize + tileSize / 2))
+
     const x      = originX + vx * p.distance * eased
     const y      = originY + vy * p.distance * eased
     const radius = (p.size / 2) * (1 - progress)
@@ -62,6 +69,7 @@ interface ParticleLayerProps {
   height?: number
   tileSize?: number
   gap?: number
+  isPortrait?: boolean
 }
 
 export function ParticleLayer({
@@ -71,6 +79,7 @@ export function ParticleLayer({
   height = BOARD_H,
   tileSize = TILE_SIZE,
   gap = GAP,
+  isPortrait = false,
 }: ParticleLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
@@ -96,7 +105,7 @@ export function ParticleLayer({
       const activeParticles = particles ?? useGameStore.getState().particles
       const len = activeParticles.length
       if (len > 0) {
-        drawParticles(ctx, activeParticles, Date.now(), width, height, cellSize, tileSize)
+        drawParticles(ctx, activeParticles, Date.now(), width, height, cellSize, tileSize, isPortrait)
       } else if (prevLen > 0) {
         ctx.clearRect(0, 0, width, height)
       }
@@ -108,7 +117,7 @@ export function ParticleLayer({
     return () => {
       cancelAnimationFrame(rafRef.current)
     }
-  }, [cellSize, height, particles, tileSize, width])
+  }, [cellSize, height, particles, tileSize, width, isPortrait])
 
   return (
     <div
@@ -127,8 +136,13 @@ export function ParticleLayer({
       />
 
       {resolvedScorePopups.map(popup => {
-        const cx = popup.centerCol * cellSize + tileSize / 2
-        const cy = popup.centerRow * cellSize + tileSize / 2
+        // In portrait mode, visual x = logical row * cell, visual y = logical col * cell
+        const cx = isPortrait
+          ? popup.centerRow * cellSize + tileSize / 2
+          : popup.centerCol * cellSize + tileSize / 2
+        const cy = isPortrait
+          ? popup.centerCol * cellSize + tileSize / 2
+          : popup.centerRow * cellSize + tileSize / 2
         const isBig = popup.tier === 'big'
         return (
           <div

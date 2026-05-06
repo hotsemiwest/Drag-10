@@ -88,6 +88,11 @@ export function DevSidePanel() {
   const isWide = windowWidth >= 1200
   const isNarrow = windowWidth < 768
 
+  // AI 데모 시작 시 좁은 화면에서 패널 자동 닫기
+  useEffect(() => {
+    if (aiSolving && isNarrow) setIsOpen(false)
+  }, [aiSolving, isNarrow])
+
   const fetchModels = useCallback(async () => {
     setModelsLoading(true)
     setFetchError(null)
@@ -367,28 +372,38 @@ export function DevSidePanel() {
   if (isNarrow) {
     return (
       <>
-        <button
-          onClick={() => setIsOpen(v => !v)}
-          style={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            width: 44,
-            height: 44,
-            borderRadius: '50%',
-            background: C.surface,
-            border: `1px solid ${C.borderStrong}`,
-            zIndex: 53,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 18,
-            cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-          }}
-        >
-          {aiSolving ? <span className="animate-pulse" style={{ fontSize: 14 }}>⚡</span> : '🛠️'}
-        </button>
+        {!isOpen && (
+          <button
+            onClick={() => setIsOpen(true)}
+            style={{
+              position: 'fixed',
+              bottom: 24,
+              right: 24,
+              width: aiSolving ? 'auto' : 44,
+              minWidth: 44,
+              height: 44,
+              borderRadius: 22,
+              background: aiSolving ? 'rgba(59,130,246,0.15)' : C.surface,
+              border: aiSolving ? '1px solid rgba(96,165,250,0.5)' : `1px solid ${C.borderStrong}`,
+              zIndex: 53,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              padding: aiSolving ? '0 12px' : 0,
+              fontSize: 18,
+              cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            }}
+          >
+            {aiSolving ? (
+              <>
+                <span className="animate-pulse" style={{ fontSize: 14 }}>⚡</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#60a5fa', whiteSpace: 'nowrap' }}>AI 실행중</span>
+              </>
+            ) : '🛠️'}
+          </button>
+        )}
 
         {isOpen && (
           <>

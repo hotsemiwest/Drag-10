@@ -13,8 +13,11 @@ import { MultiGame } from './components/MultiGame'
 import { MultiGameOver } from './components/MultiGameOver'
 import { Countdown } from './components/Countdown'
 import { DevSidePanel } from './components/DevSidePanel'
+import { useIsPortrait } from './hooks/useIsPortrait'
+import { ROWS } from './types/game'
 
-const BOARD_WIDTH = 916
+const LANDSCAPE_W = 916
+const GAP = 2
 
 function ThemeSync() {
   const theme = useThemeStore(s => s.theme)
@@ -32,6 +35,9 @@ export default function App() {
   const { initialize, pendingAuth, setPendingAuth } = useAuthStore()
   const multiPhase = useMultiStore(s => s.phase)
   const multiBeginPlaying = useMultiStore(s => s.beginPlaying)
+  const { isPortrait, portraitTileSize } = useIsPortrait()
+  const portraitCell = portraitTileSize + GAP
+  const boardWidth = isPortrait ? ROWS * portraitCell - GAP : LANDSCAPE_W
 
   useEffect(() => { initialize() }, [initialize])
 
@@ -72,7 +78,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="board-scaler" style={{ width: BOARD_WIDTH }}>
+      <div className="board-scaler" style={{ width: boardWidth }}>
         {multiPhase === 'playing' ? (
           <MultiGame />
         ) : (

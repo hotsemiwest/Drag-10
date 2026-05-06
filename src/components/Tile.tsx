@@ -13,11 +13,11 @@ const SVG_STYLE: React.CSSProperties = {
   filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.32))',
 }
 
-function AppleSVG({ value, fill, theme }: { value: number; fill: string; theme: Theme }) {
+function AppleSVG({ value, fill, theme, size }: { value: number; fill: string; theme: Theme; size: number }) {
   const stemColor = theme === 'dark' ? '#956129' : '#6f4320'
 
   return (
-    <svg viewBox="0 0 52 52" width="52" height="52" style={SVG_STYLE}>
+    <svg viewBox="0 0 52 52" width={size} height={size} style={SVG_STYLE}>
       <g transform="translate(-0.8, -4) scale(1.04)">
         <path d="M26 15 C26 12 28.5 9.5 31 10.5" stroke={stemColor} strokeWidth="2" strokeLinecap="round" fill="none" />
         <path
@@ -34,9 +34,9 @@ function AppleSVG({ value, fill, theme }: { value: number; fill: string; theme: 
   )
 }
 
-function CircleSVG({ value, fill }: { value: number; fill: string }) {
+function CircleSVG({ value, fill, size }: { value: number; fill: string; size: number }) {
   return (
-    <svg viewBox="0 0 52 52" width="52" height="52" style={SVG_STYLE}>
+    <svg viewBox="0 0 52 52" width={size} height={size} style={SVG_STYLE}>
       <circle cx="26" cy="26" r="20.5" fill={fill} />
       <ellipse cx="18" cy="18" rx="4.5" ry="2.8" fill="rgba(255,255,255,0.28)" transform="rotate(-25 18 18)" />
       <text x="26" y="28" textAnchor="middle" dominantBaseline="middle"
@@ -47,9 +47,9 @@ function CircleSVG({ value, fill }: { value: number; fill: string }) {
   )
 }
 
-function SquareSVG({ value, fill }: { value: number; fill: string }) {
+function SquareSVG({ value, fill, size }: { value: number; fill: string; size: number }) {
   return (
-    <svg viewBox="0 0 52 52" width="52" height="52" style={SVG_STYLE}>
+    <svg viewBox="0 0 52 52" width={size} height={size} style={SVG_STYLE}>
       <rect x="7" y="7" width="38" height="38" rx="9" fill={fill} />
       <ellipse cx="15" cy="14" rx="5" ry="3" fill="rgba(255,255,255,0.25)" transform="rotate(-20 15 14)" />
       <text x="26" y="28" textAnchor="middle" dominantBaseline="middle"
@@ -60,9 +60,9 @@ function SquareSVG({ value, fill }: { value: number; fill: string }) {
   )
 }
 
-function EightBitSVG({ value, fill }: { value: number; fill: string }) {
+function EightBitSVG({ value, fill, size }: { value: number; fill: string; size: number }) {
   return (
-    <svg viewBox="0 0 52 52" width="52" height="52" style={SVG_STYLE} shapeRendering="crispEdges">
+    <svg viewBox="0 0 52 52" width={size} height={size} style={SVG_STYLE} shapeRendering="crispEdges">
       <g transform="translate(0, 0)">
         <rect x="14" y="6" width="24" height="8" fill={fill} />
         <rect x="10" y="10" width="32" height="4" fill={fill} />
@@ -82,17 +82,17 @@ function EightBitSVG({ value, fill }: { value: number; fill: string }) {
   )
 }
 
-export const Tile = memo(function Tile({ value }: { value: number | null }) {
+export const Tile = memo(function Tile({ value, size = 52 }: { value: number | null; size?: number }) {
   const tileShape   = useThemeStore(s => s.tileShape)
   const tileColorId = useThemeStore(s => s.tileColorId)
   const theme = useThemeStore(s => s.theme)
 
-  if (value === null) return <div style={{ width: 52, height: 52 }} />
+  if (value === null) return <div style={{ width: size, height: size }} />
 
   const fill = TILE_COLORS.find(c => c.id === tileColorId)?.fill ?? '#D92B2B'
 
-  if (tileShape === 'circle') return <CircleSVG value={value} fill={fill} />
-  if (tileShape === 'square') return <SquareSVG value={value} fill={fill} />
-  if (tileShape === '8bit') return <EightBitSVG value={value} fill={fill} />
-  return <AppleSVG value={value} fill={fill} theme={theme} />
+  if (tileShape === 'circle') return <CircleSVG value={value} fill={fill} size={size} />
+  if (tileShape === 'square') return <SquareSVG value={value} fill={fill} size={size} />
+  if (tileShape === '8bit') return <EightBitSVG value={value} fill={fill} size={size} />
+  return <AppleSVG value={value} fill={fill} theme={theme} size={size} />
 })
