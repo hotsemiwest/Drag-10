@@ -33,7 +33,7 @@ interface ThemeState {
   reloadFromLocal: () => void
 }
 
-const KEY = 'applebox_theme'
+const KEY = 'drag10_theme'
 
 type Saved = Pick<ThemeState, 'theme' | 'tileShape' | 'tileColorId' | 'showHintCount' | 'showDifficulty' | 'soloBoardDifficulty' | 'showDragSelectionSum' | 'showDragSelectionRangeColor' | 'devMode' | 'soundEnabled' | 'clearEffect'>
 

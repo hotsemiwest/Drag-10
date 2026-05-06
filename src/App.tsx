@@ -15,6 +15,8 @@ import { Countdown } from './components/Countdown'
 import { DevSidePanel } from './components/DevSidePanel'
 import { useIsPortrait } from './hooks/useIsPortrait'
 import { ROWS } from './types/game'
+import { SpeedInsights } from '@vercel/speed-insights/react'
+import { Analytics } from '@vercel/analytics/react'
 
 const LANDSCAPE_W = 916
 const GAP = 2
@@ -60,6 +62,8 @@ export default function App() {
 
   return (
     <>
+    <SpeedInsights />
+    <Analytics />
     <ThemeSync />
     <div
       className="min-h-screen flex flex-col items-center justify-center py-6 overflow-x-hidden"
