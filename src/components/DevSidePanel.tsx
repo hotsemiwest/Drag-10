@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/authStore'
 import { countSolutions } from '../utils/gameLogic'
 import { C } from '../theme/tokens'
 import { StyledSelect } from './StyledSelect'
-import { AI_API_BASE } from '../lib/aiApi'
+import { AI_API_BASE, aiHeaders } from '../lib/aiApi'
 
 type ModelEntry = { label: string; path: string }
 type ModelRun = { name: string; models: ModelEntry[] }
@@ -64,6 +64,8 @@ export function DevSidePanel() {
   const [selectedRun, setSelectedRun] = useState('')
   const [modelPath, setModelPath] = useState('')
   const [modelsLoading, setModelsLoading] = useState(false)
+  const [modelWarming, setModelWarming] = useState(false)
+  const [modelReady, setModelReady] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -93,28 +95,69 @@ export function DevSidePanel() {
     if (aiSolving && isNarrow) setIsOpen(false)
   }, [aiSolving, isNarrow])
 
+  const warmupModel = useCallback(async (path: string) => {
+    if (!path) return
+    setModelWarming(true)
+    setModelReady(false)
+    try {
+      const resp = await fetch(`${AI_API_BASE}/warmup`, {
+        method: 'POST',
+        headers: aiHeaders(),
+        body: JSON.stringify({ model_path: path }),
+      })
+      if (resp.ok) setModelReady(true)
+    } catch {
+      // 워밍업 실패 시 조용히 무시 — 버튼은 여전히 눌릴 수 있음
+    } finally {
+      setModelWarming(false)
+    }
+  }, [])
+
   const fetchModels = useCallback(async () => {
     setModelsLoading(true)
     setFetchError(null)
+    setModelReady(false)
     try {
-      const resp = await fetch(`${AI_API_BASE}/models`)
+      const resp = await fetch(`${AI_API_BASE}/models`, { headers: aiHeaders() })
       if (!resp.ok) {
         setFetchError(`서버 오류 ${resp.status}`)
         return
       }
       const data = await resp.json()
       const runs: ModelRun[] = data.runs ?? []
+      const preloadedPath: string | undefined = data.preloaded_path
       setModelRuns(runs)
       if (runs.length > 0) {
-        setSelectedRun(runs[0].name)
-        if (runs[0].models.length > 0) setModelPath(runs[0].models[0].path)
+        // preloaded_path와 일치하는 모델을 기본 선택 (서버 메모리에 이미 로드됨)
+        let defaultRun = runs[0]
+        let defaultModel = runs[0].models[0] as ModelEntry | undefined
+        if (preloadedPath) {
+          outer: for (const run of runs) {
+            for (const m of run.models) {
+              if (m.path === preloadedPath) {
+                defaultRun = run
+                defaultModel = m
+                break outer
+              }
+            }
+          }
+        }
+        setSelectedRun(defaultRun.name)
+        if (defaultModel) {
+          setModelPath(defaultModel.path)
+          if (defaultModel.path === preloadedPath) {
+            setModelReady(true)  // 이미 서버 메모리에 로드됨
+          } else {
+            warmupModel(defaultModel.path)
+          }
+        }
       }
     } catch (e) {
       setFetchError(e instanceof Error ? e.message : '네트워크 오류')
     } finally {
       setModelsLoading(false)
     }
-  }, [])
+  }, [warmupModel])
 
   useEffect(() => { fetchModels() }, [fetchModels])
 
@@ -257,7 +300,10 @@ export function DevSidePanel() {
         onChange={v => {
           const run = modelRuns.find(r => r.name === v)
           setSelectedRun(v)
-          if (run?.models.length) setModelPath(run.models[0].path)
+          if (run?.models.length) {
+            setModelPath(run.models[0].path)
+            warmupModel(run.models[0].path)
+          }
         }}
         options={
           modelRuns.length === 0
@@ -271,7 +317,10 @@ export function DevSidePanel() {
       <StyledSelect
         label="모델"
         value={modelPath}
-        onChange={setModelPath}
+        onChange={v => {
+          setModelPath(v)
+          warmupModel(v)
+        }}
         options={(modelRuns.find(r => r.name === selectedRun)?.models ?? []).map(m => ({
           value: m.path,
           label: m.label,
@@ -299,19 +348,33 @@ export function DevSidePanel() {
               : '⏹ 중지'
           }
           </button>
+        ) : modelWarming ? (
+          <button
+            disabled
+            className="w-full rounded-lg py-2 text-xs font-bold animate-pulse"
+            style={{ background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.4)', color: '#fbbf24' }}
+          >
+            ⚡ 모델 준비 중...
+          </button>
         ) : (
           <button
             onClick={handleAIDemo}
             disabled={!isPlaying || modelRuns.length === 0}
             className="w-full rounded-lg py-2 text-xs font-bold transition-all active:scale-95 disabled:opacity-35"
             style={{
-              background: isPlaying && modelRuns.length > 0 ? 'rgba(34,197,94,0.12)' : C.surfaceRaised,
-              border: `1px solid ${isPlaying && modelRuns.length > 0 ? 'rgba(34,197,94,0.4)' : C.borderFaint}`,
-              color: isPlaying && modelRuns.length > 0 ? '#22c55e' : C.textPrimary,
+              background: isPlaying && modelRuns.length > 0
+                ? modelReady ? 'rgba(34,197,94,0.12)' : 'rgba(59,130,246,0.1)'
+                : C.surfaceRaised,
+              border: `1px solid ${isPlaying && modelRuns.length > 0
+                ? modelReady ? 'rgba(34,197,94,0.4)' : 'rgba(59,130,246,0.3)'
+                : C.borderFaint}`,
+              color: isPlaying && modelRuns.length > 0
+                ? modelReady ? '#22c55e' : '#60a5fa'
+                : C.textPrimary,
               transition: 'all 0.2s',
             }}
           >
-            🤖 AI 데모 시작
+            {modelReady ? '🤖 AI 데모 시작' : '🤖 AI 데모 시작'}
           </button>
         )}
       </div>

@@ -276,7 +276,34 @@ def list_models():
             if models:
                 runs.append({"name": run_dir.name, "models": models})
 
-    return {"runs": runs}
+    preloaded = os.getenv("AI_MODEL_PATH")
+    return {"runs": runs, "preloaded_path": preloaded}
+
+
+class WarmupRequest(BaseModel):
+    model_path: str
+
+
+@app.post("/warmup", dependencies=[Depends(_verify_api_key)])
+def warmup(req: WarmupRequest, _rl: None = Depends(_check_rate_limit)):
+    raw_path = req.model_path
+    if not raw_path.startswith("hf://"):
+        _validate_local_path(raw_path)
+    try:
+        local_path = _resolve_path(raw_path)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"모델 다운로드 실패: {e}")
+    if not Path(local_path).exists():
+        raise HTTPException(status_code=404, detail="모델 파일을 찾을 수 없음")
+    already_cached = local_path in _model_cache
+    if not already_cached:
+        try:
+            _load_model(local_path)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"모델 로드 실패: {e}")
+    return {"ready": True, "cached": already_cached}
 
 
 @app.post("/solve", response_model=SolveResponse, dependencies=[Depends(_verify_api_key)])
