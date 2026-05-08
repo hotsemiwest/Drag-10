@@ -231,9 +231,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   endGame: () => {
-    const { score, personalBest, personalBestTime, elapsedTime, gameMode } = get()
+    const { score, personalBest, personalBestTime, elapsedTime, gameMode, isAIGame } = get()
     if (gameMode === 'score') {
-      const isNewRecord = score > personalBest
+      const isNewRecord = !isAIGame && score > personalBest
       if (isNewRecord && _persistBest) {
         localStorage.setItem(PERSONAL_BEST_KEY, String(score))
       }
@@ -244,7 +244,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         aiSolving: false,
       })
     } else {
-      const isNewRecord = personalBestTime === 0 || elapsedTime < personalBestTime
+      const isNewRecord = !isAIGame && (personalBestTime === 0 || elapsedTime < personalBestTime)
       if (isNewRecord && _persistBest) {
         localStorage.setItem(TIME_ATTACK_BEST_KEY, String(elapsedTime))
       }
