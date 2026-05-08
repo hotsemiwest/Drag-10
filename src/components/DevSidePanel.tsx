@@ -118,7 +118,7 @@ export function DevSidePanel() {
     setFetchError(null)
     setModelReady(false)
     try {
-      const resp = await fetch(`${AI_API_BASE}/models`, { headers: aiHeaders() })
+      const resp = await fetch(`${AI_API_BASE}/models`)
       if (!resp.ok) {
         setFetchError(`서버 오류 ${resp.status}`)
         return
